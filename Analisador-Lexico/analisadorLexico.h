@@ -30,6 +30,7 @@ void EstadoInicial(AnalisadorLexico *lex, No *listaP);
 void q1(AnalisadorLexico *lex, No *TS, No *listaP);
 void q2(AnalisadorLexico *lex, No *TS);
 void q3(AnalisadorLexico *lex, No *TS);
+void q4(AnalisadorLexico *lex, No *TS);
 Token EstadoFinal(AnalisadorLexico *lex, No *TS, char nome[300], char valor[300], int linha, int coluna);
 
 #endif

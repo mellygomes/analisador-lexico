@@ -61,7 +61,6 @@ int BuscarIndice(No **lista, char str[]) {
     while (aux != NULL) {
     
         if (strcmp(aux->str, str) == 0) {
-            // printf("%s e %s\n", aux->str, str);
             break;
         }
 
@@ -71,7 +70,6 @@ int BuscarIndice(No **lista, char str[]) {
 
     if (aux == NULL) {
         Inserir(lista, str);
-
     }
 
     return indice;

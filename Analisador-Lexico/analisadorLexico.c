@@ -314,10 +314,13 @@ void q3(AnalisadorLexico *lex, No *TS) {
     while (isdigit(c)) {
         c = ObterCharactere(lex);
 
-        if (isalpha(c)) {
+        if((c == 'e') || (c == 'E')) {
+            q4(lex, TS);
+            return;
+        } else if (isalpha(c)) {
             printf("\nERRO: Caractere alfabetico invalido nesta posicao (linha: %i, coluna: %i)\n\n", lex->numLinha, lex->coluna - 2);
             exit(1);
-        }
+        } 
     }
 
     if (c == '\n') {
@@ -337,7 +340,49 @@ void q3(AnalisadorLexico *lex, No *TS) {
     }
 }
 
-// Estado Final: insere os tokens no arquivo "listaTokens"
+//reconhece numeros exponenciais
+void q4(AnalisadorLexico *lex, No *TS) {
+    char c = ObterCharactere(lex);
+
+    if ((isdigit(c)) || (c == '+') || (c == '-')) {
+        c = ObterCharactere(lex);
+        if (isalpha(c)) {
+            printf("\nERRO: Caractere alfabetico invalido nesta posicao (linha: %i, coluna: %i)\n\n", lex->numLinha, lex->coluna - 2);
+            exit(1);
+        }
+
+        while (isdigit(c)) {
+            if (isalpha(c)) {
+                printf("\nERRO: Caractere alfabetico invalido nesta posicao (linha: %i, coluna: %i)\n\n", lex->numLinha, lex->coluna - 2);
+                exit(1);
+            }
+
+            c = ObterCharactere(lex);
+        }
+
+    } else if (isdigit(c) == 0) {
+        printf("\n\nERRO: numero exponencial mal formado (linha: %i, coluna: %i)\n\n", lex->numLinha, lex->coluna);
+        exit(1);
+    }
+
+    if (c == '\n') {
+        EstadoFinal(lex, TS, "NUM_EXP", lex->lexema, lex->numLinha - 1, lex->coluna);
+        return;
+
+    } else if ((c == ' ') || (c == '\0')) {
+        EstadoFinal(lex, TS, "NUM_EXP", lex->lexema, lex->numLinha, lex->coluna);
+        return;
+
+    } else if ((isdigit(c) == 0)) {
+        lex->lexema[strlen(lex->lexema) - 1] = '\0';
+        lex->head--;
+        lex->coluna--;
+        EstadoFinal(lex, TS, "NUM_EXP", lex->lexema, lex->numLinha, lex->coluna);
+        return;
+    }
+}
+
+// Estado Final: insere os tokens no arquivo "listatokens"
 Token EstadoFinal(AnalisadorLexico *lex, No *TS, char nome[300], char valor[300], int linha, int coluna) {
     Token token;
     IniciarToken(token);
@@ -367,10 +412,10 @@ Token EstadoFinal(AnalisadorLexico *lex, No *TS, char nome[300], char valor[300]
         NumInt = atoi(lex->lexema);
         fprintf(arquivoSaida, "<%s, \"%i\"> %i, %i\n", token.Nome, NumInt, token.linha, token.coluna);
 
-    } else if (strcmp(token.Nome, "NUM-FLT") == 0) {
+    } else if (strcmp(token.Nome, "NUM-FLT") == 0 || strcmp(token.Nome, "NUM-EXP") == 0) {
         int NumFlt = 0;
         NumFlt = atof(lex->lexema);
-        fprintf(arquivoSaida, "<%s, \"%.8f\"> %i, %i\n", token.Nome, NumFlt, token.linha, token.coluna);
+        fprintf(arquivoSaida, "<%s, \"%.f\"> %i, %i\n", token.Nome, NumFlt, token.linha, token.coluna);
     } else {
         fprintf(arquivoSaida, "<%s, \"%s\"> %i, %i\n", token.Nome, lex->lexema, token.linha, token.coluna);
     }
