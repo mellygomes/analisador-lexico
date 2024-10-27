@@ -3,7 +3,6 @@
 #include "src/HashTable/hashtable.h"
 
 void InicializarAnalizadorLexico(AnalisadorLexico *lex) {
-
     lex->head = 0;    
     lex->linha = 1;
     lex->lexema[300] = '\0';
@@ -84,7 +83,7 @@ char ObterCharactere(AnalisadorLexico *lex) {
     char caractere;
     size_t tamanhoFita = strlen(lex->fita);
 
-    if ((size_t)lex->head < tamanhoFita + 1) {
+    if ((size_t)lex->head <= tamanhoFita + 1) {
         caractere = lex->fita[lex->head];
         
         //concatena o character aceito para formar o lexema
@@ -104,7 +103,7 @@ char ObterCharactere(AnalisadorLexico *lex) {
     return caractere;
 }
 
-Token getToken(AnalisadorLexico *lex) {
+Token getToken(AnalisadorLexico *lex, char *tbl[], No *TS) {
     Token token;
     IniciarToken(token);
 
@@ -112,7 +111,7 @@ Token getToken(AnalisadorLexico *lex) {
         char c = ObterCharactere(lex); 
 
         if (c == '\0') { //a fita terminou 
-            token = buildToken(lex, 0);
+            token = buildToken(lex, tbl, TS, 0);
             break;
 
         } else if ((isspace(c) != 0) || (c == '\t') || (c == '\n')) {
@@ -123,30 +122,32 @@ Token getToken(AnalisadorLexico *lex) {
                 c = ObterCharactere(lex);
             }
 
-            token = buildToken(lex, 1);
+            token = buildToken(lex, tbl, TS, 1);
 
         } else if (isdigit(c)) {
-            int state = 2;
             while (isdigit(c)) {//enquanto o caractere for um digito, o lexema continuara sendo formado
                 c = ObterCharactere(lex);
 
                 if(c == '.') {
-                    state = 3;
-                    c = ObterCharactere(lex);
+                    token = buildNumber(lex, token, tbl, TS);
+                    return token;
+                } else if (isalpha(c)) {
+                    printf("\nERRO: Caractere alfabetico invalido nesta posicao (linha: %i, coluna: %i)\n\n", lex->linha, lex->coluna - 2);
+                    exit(EXIT_FAILURE);
                 }
             }
 
-            token = buildToken(lex, state);
+            token = buildToken(lex, tbl, TS, 2);
 
         } else {
             
-            if ((lex->fita[lex->head + 1] == '=') || (lex->fita[lex->head + 1] == '>')) {
+            if ((lex->fita[lex->head] == '=') || (lex->fita[lex->head] == '>')) {
                 char c = ObterCharactere(lex);
-                token = buildToken(lex, 4);
+                token = buildToken(lex, tbl, TS, 5);
                 break;
             }
             
-            token = buildToken(lex, 4);
+            token = buildToken(lex, tbl, TS, 5);
         }
 
         break; //nunca retire esse break :0
@@ -155,21 +156,72 @@ Token getToken(AnalisadorLexico *lex) {
     return token;
 }
 
-Token buildToken(AnalisadorLexico *lex, int state) {
+Token buildNumber(AnalisadorLexico *lex, Token token, char *tbl[], No *TS) {
+    char c = ObterCharactere(lex);
+
+    if (isdigit(c) == 0) {
+        printf("\n\nERRO: numero real mal formado (linha: %i, coluna: %i)\n\n", lex->linha, lex->coluna);
+        exit(EXIT_FAILURE);
+    }
+
+    while (isdigit(c)) {
+        c = ObterCharactere(lex);
+
+        if((c == 'e') || (c == 'E')) {
+            token = buildExp(lex, token, tbl, TS);
+            break;
+        } else if (isalpha(c)) {
+            printf("\nERRO: Caractere alfabetico invalido nesta posicao (linha: %i, coluna: %i)\n\n", lex->linha, lex->coluna - 2);
+            exit(EXIT_FAILURE);
+        } 
+    }
+
+    token = buildToken(lex, tbl, TS, 3);
+    return token;
+}
+
+Token buildExp(AnalisadorLexico *lex, Token token, char *tbl[], No *TS) {
+    char c = ObterCharactere(lex);
+
+    if ((isdigit(c)) || (c == '+') || (c == '-')) {
+        c = ObterCharactere(lex);
+        if (isalpha(c)) {
+            printf("\nERRO: Caractere alfabetico invalido nesta posicao (linha: %i, coluna: %i)\n\n", lex->linha, lex->coluna - 2);
+            exit(EXIT_FAILURE);
+        }
+
+        while (isdigit(c)) {
+            if (isalpha(c)) {
+                printf("\nERRO: Caractere alfabetico invalido nesta posicao (linha: %i, coluna: %i)\n\n", lex->linha, lex->coluna - 2);
+                exit(EXIT_FAILURE);
+            }
+
+            c = ObterCharactere(lex);
+        }
+
+    } else if (isdigit(c) == 0) {
+        printf("\n\nERRO: numero exponencial mal formado (linha: %i, coluna: %i)\n\n", lex->linha, lex->coluna - 2);
+        exit(EXIT_FAILURE);
+    }
+
+    token = buildToken(lex, tbl, TS, 4);
+    return token;
+}
+
+
+Token buildToken(AnalisadorLexico *lex, char *tbl[], No *TS, int state) {
     Token token;
     IniciarToken(token);
-    char *tbl;
-    InserirPalavrasReservadas(&tbl);
     int linha = 0;
      
-    if ((isalnum(lex->lexema[strlen(lex->lexema) - 1]) == 0) && (state < 4)) {
+    if ((isalnum(lex->lexema[strlen(lex->lexema) - 1]) == 0) && (state < 5)) {
         lex->lexema[strlen(lex->lexema) - 1] = '\0';
         lex->head--;
         lex->coluna--;
         linha = lex->linha;
     }
 
-    if (lex->fita[lex->head + 1] == '\n') {
+    if (lex->fita[lex->head - 1] == '\n') {
         linha = lex->linha - 1;
     } else {
         linha = lex->linha;
@@ -190,19 +242,27 @@ Token buildToken(AnalisadorLexico *lex, int state) {
         break;
 
         case 1:
-            if (BuscarHash(&tbl, lex->lexema) == NULL) {
+            if (BuscarHash(tbl, lex->lexema) == NULL) {
                 strcpy(token.nome, "ID");
+                int indice = BuscarIndice(&TS, token.valor);
+                sprintf(token.valor, "%d", indice); //modificar essa linha para usar no sintatico           
             } else {
                 strcpy(token.nome, "PAL-RES");
             }
         break;
         case 2:
             strcpy(token.nome, "NUM-INT");
+            // atoi(token.valor); descomentar para usar no sintatico
         break;
         case 3:
             strcpy(token.nome, "NUM-FLT");
+            // atof(token.valor); descomentar para usar no sintatico
         break;
         case 4:
+            strcpy(token.nome, "NUM-EXP");
+            // atof(token.valor); descomentar para usar no sintatico
+        break;
+        case 5:
             if (strcmp(token.valor, ";") == 0) {
                 strcpy(token.nome, "SMB-SEM");
 

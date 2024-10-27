@@ -28,9 +28,9 @@ void Inserir(No **lista, char *str) {
 
 }
 
-
 void Imprimir(No *no) {
     No *aux = no;
+    printf("\nTabela de simbolos\n\n");
     while (no) {
         printf("[%i] - %s\n", BuscarIndice(&aux, no->str), no->str);
         no = no->proximo;
@@ -38,30 +38,19 @@ void Imprimir(No *no) {
     printf("\n\n");
 }
 
-char *Buscar(No **lista, char str[]) {
-    No *aux = *lista;
-    char *strfound = NULL;
-
-    // Percorre a lista enquanto não achar a string
-    while (aux != NULL) {
-        // Compara as strings usando strcmp
-        if (strcmp(aux->str, str) == 0) { // strcmp retorna 0 quando as strings são iguais
-            strfound = aux->str;
-            break;
-        }
-        aux = aux->proximo;
+int BuscarIndice(No **lista, char str[]) {
+    if (*lista == NULL) {
+        Inserir(lista, str);
+        return 1;
     }
 
-    return strfound; // Retorna a string encontrada ou NULL se não encontrou
-}
-
-int BuscarIndice(No **lista, char str[]) {
     No *aux = *lista;
-    int indice = 0;
+    int indice = 1;
+
     while (aux != NULL) {
     
         if (strcmp(aux->str, str) == 0) {
-            break;
+            return indice;
         }
 
         aux = aux->proximo;

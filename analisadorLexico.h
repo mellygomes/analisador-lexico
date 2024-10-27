@@ -26,7 +26,9 @@ char *concatenarChar(char texto[], char letra);
 void AtualizarLinhaColuna(AnalisadorLexico *lex, char c);
 char ObterCharactere(AnalisadorLexico *lex);
 
-Token getToken(AnalisadorLexico *lex);
-Token buildToken(AnalisadorLexico *lex, int state);
+Token getToken(AnalisadorLexico *lex, char *tbl[], No *TS);
+Token buildNumber(AnalisadorLexico *lex, Token token, char *tbl[], No *TS);
+Token buildExp(AnalisadorLexico *lex, Token token, char *tbl[], No *TS);
+Token buildToken(AnalisadorLexico *lex, char *tbl[], No *TS, int state);
 
 #endif
